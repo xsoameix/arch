@@ -184,8 +184,8 @@ Make first user
 ## Install Docker
 
     # pacman -S docker
-    # systemctl enable docker
-    # systemctl start docker
+    # systemctl enable docker.service
+    # systemctl start docker.service
 
 ### Install named
 
@@ -195,19 +195,97 @@ Make first user
 Add a line
 
     # vi /etc/iptables/iptables.rules
-    -A TCP -p tcp --dport 53 -j ACCEPT
+    -A TCP -i your_interface -p tcp --dport 53 -j ACCEPT
 
     # iptables-restore < /etc/iptables/iptables.rules
 
-check if named is listening
+Check if named is listening
 
     # ss -tulp
 
-check log
+Check log
 
     # docker logs named
 
-check if works
+Check if works
 
     # dig your_domain
     # dig your_domain +trace
+
+### Install sshd
+
+    # pacman -S openssh
+
+Configuration
+
+    # vi /etc/ssh/sshd_config
+    Port your_prefered_port
+    Protocol 2
+    HostKey /etc/ssh/ssh_host_xxxxxxxx_key
+    PermitRootLogin no
+    StrictModes yes
+    RSAAuthentication yes
+    PubkeyAuthentication yes
+    PasswordAuthentication no
+    PermitEmptyPasswords no
+    UsePAM yes
+    Banner none
+
+Add a line
+
+    AllowUsers your_name
+
+Use any service to publish your client public key
+
+I use `http://pastebin.com/` in this example
+
+![pastebin](./pastebin.png)
+![pastebin](./pastebin_raw.png)
+
+Back to normal user from root
+
+    # exit
+
+Add user needed authenticated
+
+    $ mkdir ~/.ssh
+    $ chmod 700 ~/.ssh
+    $ curl http://pastebin.com/raw.php?i=xxyyzz > ~/.ssh/authorized_keys
+    $ chmod 600 ~/.ssh/authorized_keys
+
+Log in as root
+
+    # su -
+
+Allow sshd
+
+    # vi /etc/iptables/iptables.rules
+    -A TCP -i your_interface -p tcp --dport your_prefered_port -m conntrack --ctstate NEW -m recent --set --name ssh --rsource
+    -A TCP -i your_interface -p tcp --dport your_prefered_port -m conntrack --ctstate NEW -m recent ! --rcheck --seconds 60 --hitcount 4 --name ssh --rsource -j ACCEPT
+
+Enable the rules
+
+    # iptables-restore < /etc/iptables/iptables.rule
+    # systemctl restart docker.service
+    # docker start named
+
+Configure at your client
+
+    $ vi ~/.ssh/config
+    Host your_prefered_name
+      HostName your_host_ip
+      Port     your_prefered_port
+      User     your_account_name
+
+Run
+
+    # systemctl enable sshd.service
+    # systemctl start sshd.service
+
+Check if sshd is running
+
+    # ss -tulpn
+
+Check if sshd is usable at client
+
+    $ ssh your_prefered_name
