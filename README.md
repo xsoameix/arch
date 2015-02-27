@@ -1,4 +1,9 @@
-# Install Arch linux
+Layout:
+
+    arch (host) ─┬─ docker ─┬─ named (container based on opensuse)
+                 └─ sshd    ├─ git   (container based on arch)
+
+# Install Arch linux (host)
 
 ## Make bootable USB
 
@@ -184,20 +189,27 @@ Make first user
 ## Install Docker
 
     # pacman -S docker
+
+Configure as non root
+
+    # gpasswd -a your_name docker
+    # exit
+    $ newgrp docker
+
+Run
+
     # systemctl enable docker.service
     # systemctl start docker.service
 
-### Install named
+Create a configration file
 
-    # docker build -t your_name/named:v1 your_named_directory
-    # docker run --name named -d -p 53:53 -P 53:53/udp your_name/named:v1
+    # vi /etc/sysctl.d/30-ipforward.conf
+    net.ipv4.ip_forward=1
 
-Add a line
+### Install named (container)
 
-    # vi /etc/iptables/iptables.rules
-    -A TCP -i your_interface -p tcp --dport 53 -j ACCEPT
-
-    # iptables-restore < /etc/iptables/iptables.rules
+    $ docker build -t your_name/named:v1 your_named_directory
+    $ docker run --name named -d -p 53:53 -p 53:53/udp your_name/named:v1
 
 Check if named is listening
 
@@ -205,7 +217,7 @@ Check if named is listening
 
 Check log
 
-    # docker logs named
+    $ docker logs named
 
 Check if works
 
@@ -228,7 +240,7 @@ Configuration
     PubkeyAuthentication yes
     PasswordAuthentication no
     PermitEmptyPasswords no
-    UsePAM yes
+    UsePAM no
     Banner none
 
 Add a line
@@ -242,20 +254,12 @@ I use `http://pastebin.com/` in this example
 ![pastebin](./pastebin.png)
 ![pastebin](./pastebin_raw.png)
 
-Back to normal user from root
-
-    # exit
-
 Add user needed authenticated
 
     $ mkdir ~/.ssh
     $ chmod 700 ~/.ssh
     $ curl http://pastebin.com/raw.php?i=xxyyzz > ~/.ssh/authorized_keys
     $ chmod 600 ~/.ssh/authorized_keys
-
-Log in as root
-
-    # su -
 
 Allow sshd
 
@@ -265,9 +269,9 @@ Allow sshd
 
 Enable the rules
 
-    # iptables-restore < /etc/iptables/iptables.rule
-    # systemctl restart docker.service
-    # docker start named
+    # iptables-restore < /etc/iptables/iptables.rules
+    # systemctl restart iptables.service docker.service
+    $ docker start named
 
 Configure at your client
 
@@ -289,3 +293,27 @@ Check if sshd is running
 Check if sshd is usable at client
 
     $ ssh your_prefered_name
+
+### Build arch image
+
+    $ mkdir arch
+    $ curl https://raw.githubusercontent.com/docker/docker/master/contrib/mkimage-arch.sh > ~/arch/mkimage-arch.sh
+    $ curl https://raw.githubusercontent.com/docker/docker/master/contrib/mkimage-arch-pacman.conf > ~/arch/mkimage-arch-pacman.conf
+    # cd /home/your_name/arch
+    # pacman -S arch-install-scripts expect
+    # chmod +x mkimage-arch.sh
+    # LC_ALL=C ./mkimage-arch.sh
+    $ docker rm $(docker ps -a | grep "archlinux:latest" | awk '{print $1}')
+
+### Install git (container)
+
+    $ docker build -t your_name/git:v1 your_git_directory
+    $ docker run --name git -d -p your_prefered_port:your_prefered_port your_name/git:v1
+
+Configure at your client
+
+    $ vi ~/.ssh/config
+    Host your_prefered_name
+      HostName your_host_ip
+      Port     your_prefered_port
+      User     your_account_name
