@@ -2,6 +2,8 @@ Layout:
 
     arch (host) ─┬─ docker ─┬─ named (container based on opensuse)
                  └─ sshd    ├─ git   (container based on arch)
+                            ├─ app   (container based on iojs)
+                            └─ repo  (container based on scratch)
 
 # Install Arch linux (host)
 
@@ -308,7 +310,7 @@ Check if sshd is usable at client
 ### Install git (container)
 
     $ docker build -t your_name/git:v1 your_git_directory
-    $ docker run --name git -d -p your_prefered_port:your_prefered_port your_name/git:v1
+    $ docker run --name git -d -p your_prefered_port:your_prefered_port --volumes-from your_app --link your_app:app your_name/git:v1
 
 Configure at your client
 
@@ -317,3 +319,13 @@ Configure at your client
       HostName your_host_ip
       Port     your_prefered_port
       User     your_account_name
+
+### Install app (container)
+
+    $ docker build -t your_name/your_app:v1 your_app_directory
+    $ docker run --name your_app -d -p your_prefered_port:your_prefered_port --volumes-from your_repo your_name/your_app:v1
+
+### Install repo (container)
+
+    $ docker build -t your_name/your_repo:v1 your_repo_directory
+    $ docker create --name your_repo -v your_prefered_dir:your_prefered_dir your_name/your_repo:v1
