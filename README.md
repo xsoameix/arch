@@ -3,7 +3,8 @@ Layout:
     arch (host) ─┬─ docker ─┬─ named (container based on opensuse)
                  └─ sshd    ├─ git   (container based on arch)
                             ├─ app   (container based on iojs)
-                            └─ repo  (container based on scratch)
+                            ├─ pg    (container based on postgres)
+                            └─ redis (container based on redis)
 
 # Install Arch linux (host)
 
@@ -79,6 +80,7 @@ Set the time zone
 Uncomment the needed locales in `/etc/locale.gen`, then
 
     # locale-gen
+    # localectl set-locale LANG=en_US.UTF-8
 
 Set the root password
 
@@ -147,6 +149,7 @@ Setup name server
 
 Install to disk
 
+    # pacman -S grub
     # grub-install --target=i386-pc --recheck /dev/sdx
     # grub-mkconfig -o /boot/grub/grub.cfg
 
@@ -194,9 +197,8 @@ Make first user
 
 Configure as non root
 
-    # gpasswd -a your_name docker
+    # useradd -u your_uid -m -g docker docker
     # exit
-    $ newgrp docker
 
 Run
 
