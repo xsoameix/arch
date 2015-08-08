@@ -91,7 +91,7 @@ Set the root password
 
     # passwd
 
-Make first user
+Make first user (do not do this step if you want to use docker)
 
     # useradd -m your_name
     # passwd your_name
