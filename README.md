@@ -45,6 +45,12 @@ Create `swap`, `extended`, `/` partitions
 
 ## Connect to the Internet
 
+### DHCP
+
+    # systemctl start dhcpcd@your_interface
+
+### Static ip
+
 Check your networks
 
     # ip addr show
@@ -80,13 +86,23 @@ Set the time zone
 Uncomment the needed locales in `/etc/locale.gen`, then
 
     # locale-gen
-    # localectl set-locale LANG=en_US.UTF-8
 
 Set the root password
 
     # passwd
 
+Make first user
+
+    # useradd -m your_name
+    # passwd your_name
+
 ### Configure Network
+
+#### DHCP
+
+    # systemctl enable dhcpcd@your_interface
+
+#### Static IP
 
 Create a configuration file for systemd service
 
@@ -164,12 +180,46 @@ Unmount the partition
     # umount /mnt
     # reboot
 
-## User management
+## Setup locale
 
-Make first user
+    # localectl set-locale LANG=en_US.UTF-8
 
-    # useradd -m your_name
-    # passwd your_name
+## Xorg
+
+AMD/ATI, open source driver
+
+    # pacman -S xf86-video-ati
+
+Xorg server
+
+    # pacman -S xorg-server
+
+## Display manager + Desktop environment
+
+slim + xfce4
+
+    # pacman -S slim xfce4
+
+Configure slim, hash out `sessiondir /usr/share/xsessions/`
+
+    # vi /etc/slim.conf
+
+Configure xinitrc
+
+    $ cp /etc/X11/xinit/xinitrc ~/.xinitrc
+    $ vi ~/.xinitrc
+
+    # twm &
+    # xclock -geometry 50x50-1+1 &
+    # xterm -geometry 80x50+494+51 &
+    # xterm -geometry 80x20+494-0 &
+    # exec xterm -geometry 80x66+0+0 -name login
+    exec startxfce4
+
+Start slim
+
+    # systemctl enable slim.service
+    # systemctl start slim.service
 
 ## Setup firwall
 
