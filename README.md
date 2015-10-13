@@ -357,7 +357,7 @@ Check if sshd is usable at client
     # pacman -S arch-install-scripts expect
     # chmod +x mkimage-arch.sh
     # LC_ALL=C ./mkimage-arch.sh
-    $ docker rm $(docker ps -a | grep "archlinux:latest" | awk '{print $1}')
+    $ docker rm $(docker ps -aqf "exited=0")
 
 ### Install git (container)
 
